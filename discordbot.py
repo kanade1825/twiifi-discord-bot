@@ -2,7 +2,7 @@
 import discord
 
 # 自分のBotのアクセストークンに置き換えてください
-TOKEN = 'MTA2NTIzODAxODIwMzU5MDY1Nw.Gfn1uP.bWcb14ye7RWBJ5HLiFci5F7LSxiTbhcYPtXSR4'
+TOKEN = ''
 CHANNEL_ID = 720532235987451986
 # 接続に必要なオブジェクトを生成
 intents = discord.Intents.default()
