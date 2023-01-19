@@ -1,4 +1,6 @@
 # インストールした discord.py を読み込む
+import random
+
 import discord
 
 # 自分のBotのアクセストークンに置き換えてください
@@ -13,12 +15,23 @@ async def start():
     channel = client.get_channel(CHANNEL_ID)
     await channel.send("ログインしました。")
 
-async def getMem(ctx):
-    print(ctx.gulid.members)
-    await ctx.channel.send('取得しました')
 
-async def roulette():
-    getMem()
+#メンバー取得処理
+async def getMem(command):
+    member = command.channel.members
+    memberlist = []
+    for i in member:
+        memberlist.append(i.id)
+    print(memberlist)
+    await command.channel.send('取得しました')
+    return memberlist
+
+#ランダム抽選処理
+async def roulette(message1):
+    allmenber = await getMem(message1)
+    choicemenber =  random.choice(allmenber)
+    return choicemenber
+
 
 # 起動時に動作する処理
 @client.event
@@ -36,9 +49,11 @@ async def on_message(message):
     # 「/neko」と発言したら「にゃーん」が返る処理
     if message.content == '/neko':
         await message.channel.send('にゃーん')
+
+    #ランダム抽選コマンド
     elif message.content == '/roulette':
-        await message.channel.send(str(message.channel.members))
-        print(message.channel.members)
+        log = await roulette(message)
+        await message.channel.send(" <@{}> さん当選おめでとうございます！".format(log))
 
 
 
