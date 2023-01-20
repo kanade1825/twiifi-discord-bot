@@ -1,9 +1,8 @@
-# インストールした discord.py を読み込む
-# 自分のBotのアクセストークンに置き換えてください
-# 接続に必要なオブジェクトを生成
 
 discord = None
 client = None
+
+#VC入退出ログ
 async def voice_log(CHANNEL_ID, member, before, after):
     from datetime import datetime
 
@@ -17,6 +16,7 @@ async def voice_log(CHANNEL_ID, member, before, after):
                 msg = f'{now:%m/%d-%H:%M} に {member.name} が {before.channel.name} から退出しました。'
                 await alert_channel.send(msg)
 
+#メッセージ削除ログ
 async def message_delete_log(CHANNEL_ID,message):
     from datetime import datetime
 
@@ -30,7 +30,7 @@ async def message_delete_log(CHANNEL_ID,message):
     channel = message.guild.get_channel(CHANNEL_ID)
     await channel.send(embed=embed)
 
-
+#メッセージ編集ログ
 async def message_edit_log(CHANNEL_ID,before, after):
     channel = client.get_channel(CHANNEL_ID)
 
