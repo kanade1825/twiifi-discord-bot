@@ -6,6 +6,37 @@ import botlog as log
 import random
 from discord.channel import VoiceChannel
 
+from voice_generator import creat_WAV
+
+#capcha
+import discord
+import os
+import json
+from discord.ext import commands
+from Tools.utils import getGuildPrefix
+from Tools.translate import Translate
+
+intents = discord.Intents.default()
+intents.members = True
+
+bot = commands.Bot(getGuildPrefix, intents = intents)
+
+# HELP
+bot.remove_command("help") # To create a personal help command
+
+# Translate
+bot.translate = Translate()
+
+# Load cogs
+if __name__ == '__main__':
+    for filename in os.listdir("Cogs"):
+        if filename.endswith(".py"):
+            bot.load_extension(f"Cogs.{filename[:-3]}")
+
+
+
+
+
 # 自分のBotのアクセストークンに置き換えてください
 TOKEN = ''
 CHANNEL_ID = 720532235987451986
@@ -16,13 +47,13 @@ intents = discord.Intents.default()
 intents.members = True
 intents.voice_states = True
 intents.messages = True
-client = discord.Client(intents=discord.Intents.all())
-log.client = client
+#client = discord.Client(intents=discord.Intents.all())
+log.client = bot
 log.discord = discord
 
 
 async def start():
-    channel = client.get_channel(CHANNEL_ID)
+    channel = bot.get_channel(CHANNEL_ID)
     await channel.send("ログインしました。")
 
 
@@ -49,15 +80,23 @@ async def roulette(message1):
 
 
 # 起動時に動作する処理
-@client.event
+@bot.event
 async def on_ready():
     # 起動したらターミナルにログイン通知が表示される
     print('ログインしました')
     await start()
+    print(f'We have logged in as {bot.user}')
+    print(discord.__version__)
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name =f"?help"))
+
+# ------------------------ RUN ------------------------ #
+with open("config.json", "r") as config:
+    data = json.load(config)
+    token = data["token"]
 
 
 # メッセージ受信時に動作する処理
-@client.event
+@bot.event
 async def on_message(message):
     # メッセージ送信者がBotだった場合は無視する
     if message.author.bot:
@@ -82,69 +121,33 @@ async def on_message(message):
         await message.channel.send('読み上げBotが退出しました')
 
 
-ID_ROLE_WELCOME = 1066022111925252146  # 付けたい役職のID
-UnicodeEmoji = '👍'
-
-
-# リアクション判定
-@client.event
-async def on_raw_reaction_add(payload):
-    if payload.message_id == ID:
-        checked_emoji = payload.emoji.name
-        print(checked_emoji)
-        # channel_id から Channel オブジェクトを取得
-        channel = client.get_channel(payload.channel_id)
-        # 該当のチャンネル以外はスルー
-        if channel.id != CHANNEL_ID2:
-            return
-        # guild_id から Guild オブジェクトを取得
-        guild = client.get_guild(payload.guild_id)
-        # user_id から Member オブジェクトを取得
-        member = guild.get_member(payload.user_id)
-        # 用意した役職IDから Role オブジェクトを取得
-        role = guild.get_role(ID_ROLE_WELCOME)
-        # リアクションを付けたメンバーに役職を付与
-        if checked_emoji == UnicodeEmoji:
-            await member.add_roles(role)
-            # 分かりやすいように歓迎のメッセージを送る
-            await channel.send('いらっしゃいませ！')
-
-
-@client.event
-async def on_raw_reaction_remove(payload):
-    if payload.message_id == ID:
-        print(payload.emoji.name)
-        checked_emoji = payload.emoji.name
-
-    guild_id = payload.guild_id
-    guild = discord.utils.find(lambda g: g.id == guild_id, client.guilds)
-    channel = client.get_channel(payload.channel_id)
-
-    if checked_emoji == UnicodeEmoji:
-        role = guild.get_role(ID_ROLE_WELCOME)
-        member = guild.get_member(payload.user_id)
-        await member.remove_roles(role)
-        await channel.send('ばいばい')
+    else:
+        if message.guild.voice_client:
+            print(message.content)
+            creat_WAV(message.content)
+            message.guild.voice_client.play(discord.FFmpegPCMAudio("output.wav"))
 
 
 
 # メッセージVCログイン云々
-@client.event
+@bot.event
 async def on_voice_state_update(member, before, after):
     await log.voice_log(CHANNEL_ID, member, before, after)
 
 
 # メッセージ削除ログ
-@client.event
+@bot.event
 async def on_message_delete(message):
     await log.message_delete_log(CHANNEL_ID, message)
 
 
 # メッセージ編集ログ
-@client.event
+@bot.event
 async def on_message_edit(before, after):
     await log.message_edit_log(CHANNEL_ID, before, after)
 
 
 # Botの起動とDiscordサーバーへの接続
-client.run(TOKEN)
+if __name__ == '__main__':
+    bot.run(token)
+    bot.run(token)
