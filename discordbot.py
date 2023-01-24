@@ -1,20 +1,19 @@
 # インストールした discord.py を読み込む
+
+import json
+import os
+import random
+
+# capcha
 import discord
-from pycparser.c_ast import ID
+from discord.channel import VoiceChannel
+from discord.ext import commands, tasks
 
 import botlog as log
-import random
-from discord.channel import VoiceChannel
-
-from voice_generator import creat_WAV
-
-#capcha
-import discord
-import os
-import json
-from discord.ext import commands
-from Tools.utils import getGuildPrefix
+import coinhistricaldata
 from Tools.translate import Translate
+from Tools.utils import getGuildPrefix
+from voice_generator import creat_WAV
 
 intents = discord.Intents.default()
 intents.members = True
@@ -42,6 +41,7 @@ TOKEN = ''
 CHANNEL_ID = 720532235987451986
 CHANNEL_ID2 = 1065245120666017832
 ID = 1066019582239854642
+channel_sent = None
 # 接続に必要なオブジェクトを生成
 intents = discord.Intents.default()
 intents.members = True
@@ -50,6 +50,7 @@ intents.messages = True
 #client = discord.Client(intents=discord.Intents.all())
 log.client = bot
 log.discord = discord
+
 
 
 async def start():
@@ -72,11 +73,28 @@ async def getMem(command):
     return member_list
 
 
+
 # ランダム抽選処理
 async def roulette(message1):
     all_member = await getMem(message1)
     choice_member = random.choice(all_member)
     return choice_member
+
+#価格を一定間隔で喋らせるシステム
+@tasks.loop(seconds=10)
+async def send_message_every_10sec():
+    await bot.wait_until_ready()
+    channel = bot.get_channel(CHANNEL_ID)
+    price  = await coinhistricaldata.real_time_price()
+    VoiCE = 881175320194076672
+    VoiCE1 = bot.get_channel(VoiCE)
+    voice_client = VoiCE1.guild.voice_client
+    message = "現在の価格は" + price + "ドルです"
+    await channel.send(message)
+    creat_WAV(message)
+    if voice_client.is_playing():
+        voice_client.stop()
+    VoiCE1.guild.voice_client.play(discord.FFmpegPCMAudio("output.wav"))
 
 
 # 起動時に動作する処理
@@ -88,6 +106,11 @@ async def on_ready():
     print(f'We have logged in as {bot.user}')
     print(discord.__version__)
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name =f"?help"))
+    VoiCE = 881175320194076672
+    VoiCE1 = bot.get_channel(VoiCE)
+    await VoiceChannel.connect(VoiCE1)
+    send_message_every_10sec.start()
+
 
 # ------------------------ RUN ------------------------ #
 with open("config.json", "r") as config:
@@ -149,5 +172,4 @@ async def on_message_edit(before, after):
 
 # Botの起動とDiscordサーバーへの接続
 if __name__ == '__main__':
-    bot.run(token)
     bot.run(token)
